@@ -4,12 +4,12 @@ import "izitoast/dist/css/iziToast.min.css";
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 
-const API_KEY = "48383034-506c7f8ffe99ad1c3f13eb63b";
-const BASE_URL = "https://pixabay.com/api/?";
+import { API_KEY, BASE_URL } from "./config.js";
 
 const form = document.getElementById('search-form');
 const gallery = document.querySelector('.gallery');
 const loader = document.querySelector('.loader');
+
 const searchParams = new URLSearchParams({
     key: API_KEY,
     q: "",
@@ -18,11 +18,21 @@ const searchParams = new URLSearchParams({
     safesearch: "true"
 });
 
-form.addEventListener("submit", e => {
+function showLoader() {
+    loader.style.display = "block";
+}
+
+function hideLoader() {
+    loader.style.display = "none";
+}
+
+    document.querySelector('form').addEventListener("submit", e => {
     e.preventDefault();
-    loader.classList.add("loader");
+    gallery.innerHTML = "";
     searchParams.set('q', e.currentTarget.elements.query.value.trim());
     const url = `${BASE_URL}${searchParams.toString()}`;
+
+    showLoader(); 
 
     fetch(url)
         .then((response) => {
@@ -35,6 +45,7 @@ form.addEventListener("submit", e => {
             if (images.hits.length <= 0) {
                 throw new Error("Sorry, there are no images matching your search query. Please try again!");
             }
+
             const galleryMarkup = images.hits.map(({
                 webformatURL,
                 largeImageURL,
@@ -71,7 +82,6 @@ form.addEventListener("submit", e => {
             }).join("");
 
             gallery.innerHTML = galleryMarkup;
-            loader.classList.remove('loader');
             
             const lightbox = new SimpleLightbox(".gallery a", {
                 captionsData: "alt",
@@ -82,13 +92,14 @@ form.addEventListener("submit", e => {
 
         .catch(error => {
             iziToast.error({
-                message: `${error}`,
+                message: `${error.message}`,
                 position: 'topRight',
-            });
-
-        gallery.innerHTML = "";
-        loader.classList.remove('loader');
-    });
-    form.reset();
+            })
+        })
+        
+        .finally(() => {
+            hideLoader();
+            form.reset();
+        });
 });
 
